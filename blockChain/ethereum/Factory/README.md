@@ -1,7 +1,7 @@
-# factory contract
+# 팩토리 컨트랙트
 
-- 스마트 컨트랙트에서 컨트랙트를 배포하는 로직을 작성 하는 컨트랙트
-- 우리가 공장에서 규칙에 맞는 제품을 생산하는 것과 동일하게 규칙이 있는 인스턴스를 생성하는 패턴
+- 스마트 컨트랙트 내에서 다른 컨트랙트를 생성하고 배포하는 기능을 가진 컨트랙트입니다.
+- 마치 공장에서 특정 규칙을 따라 제품을 생산하는 것처럼, 정해진 규칙에 따라 새로운 인스턴스(컨트랙트)를 만드는 방식입니다.
 
 - 예시
 
@@ -9,237 +9,201 @@
 import "./ERC721.sol";
 
 contract FactoryNFT {
-    // 컨트랙트 생성 메서드
-    // ERC721의 인스턴스를 생성
-    // external 가스비를 줄이기 위해서 제한자를 잘 사용하는것이 중요
-    // 가스비를 줄이는 방법은 코드의 재사용을 높이고 코드의 복잡성 감소
-    // 상태변수의 접근을 최소화
-
+    // 이 컨트랙트는 ERC721 토큰 컨트랙트를 생성하는 팩토리 컨트랙트입니다.
+    // 'external' 제한자를 사용하여 가스비를 절약하며, 코드 재사용성을 높이고 복잡성을 줄여 추가적인 가스비 절감을 도모합니다.
+    // 또한, 상태 변수 접근을 최소화하여 효율성을 높입니다.
     function createContract (string memory _name, string memory _symbol) external {
-      // 이미 배포 되어있는 인스턴스에 접근할때 주소로 접근하면 해당 인스턴스에 접근을 할수 있었는데.
-      // ERC721 newNFT = ERC721(address);
-      // new 키워드로 새로운 컨트랙트 생성
+      // 'new' 키워드를 사용하여 새로운 ERC721 토큰 컨트랙트 인스턴스를 생성합니다.
       ERC721 newNFT = new ERC721(_name, _symbol);
 
-      // 뭔가 내용을 확인하고 싶다면 이벤트를 활용하자. log
+      // 생성된 컨트랙트와 함수 호출자 정보를 포함하는 이벤트를 발생시켜, 트랜잭션 로그를 통해 확인할 수 있습니다.
       emit createEvent(newNFT, msg.sender);
-      // newNFT : CA 배포된 컨트랙트의 주소
-      // msg.sender : createContract 함수 호출자 및 컨트랙트 배포자.
-      // 트랜잭션의 log에 이벤트의 내용이 보인다.
     }
 
-    event createEvent(address _address, address _owner);
+    // 'createEvent' 이벤트는 새로 생성된 컨트랙트 주소와 컨트랙트 생성자의 주소를 기록합니다.
+    event createEvent(address indexed _address, address indexed _owner);
 }
-
 ```
 
 1. 스마트 컨트랙트의 DAO
 
-- DAO 란?
+### DAO란 무엇인가?
 
-### 분산 자율 조직
+DAO는 '분산 자율 조직(Distributed Autonomous Organization)'의 약자로, 중앙 집권식이 아닌 탈중앙화된 방식으로 조직의 규칙을 운영하는 시스템입니다. 이는 스마트 컨트랙트를 통해 구현되며, 조직 내 멤버들의 투표를 통해 의사 결정이 이루어집니다. DAO의 핵심 특징은 분산화, 투명성, 자율성, 저항성으로, 모든 기록은 공개적으로 조회 및 검증이 가능하며, 중앙 집권의 제어 없이 운영됩니다.
 
-- DAO는 중앙 집권식이 아닌 탈중앙화 조직의 규칙 운영을 컨트랙트에 작성해서 컨트랙트에 의해 관리된다.
-- 조직의 멤버들의 투표로 의사 결정이 이루어진다.
-- DAO의 특징 4가지 요소 분산화, 투명성, 자율성, 저항성 등 탈중앙화 운영의 멤버들로 투표와 규칙을 컨트랙트에 작성하고
-- 기록된 내용은 공개적으로 누구나 조회할수 있고 검증할수 있다. 중앙 집권의 제어 없이 컨트랙트에 작성한 내용으로 투표가 진행된다. 외부의 제안 x 투명한 투표
+### DAO의 장점
 
-### DAO의 이점
+DAO의 가장 큰 장점은 중앙 집권식 관리가 없이 조직원들의 투표로 운영된다는 점입니다. 멤버들은 토큰을 통해 거버넌스에 참여할 권리를 가지며, 투표권은 토큰의 양에 따라 결정됩니다. 이를 통해 참여자들은 컨트랙트의 규칙에 따라 제안에 자금을 사용하거나, 제안을 실행하며, 승인 또는 거부를 결정할 수 있습니다.
 
-- 중앙 집권식 관리가 아님 조직원들의 투표로 운영되는 방식
-- DAO는 멤버들의 거버넌스에 참여할 권리를 토큰으로 증명 토큰의 갯수에 따라 투표권을 가지게 된다.
-- 투표권을 가진 참여자들이 투표를 진행 한뒤
-- 참여자들은 컨트랙트의 규칙에 따라 방향성에 따라 자금을 제안에 사용하거나 제안을 시행하거나
-- 승인 또는 거부를 진행 할수 있다.
+### DAO의 운영 과정
 
-# DAO의 진행
+DAO의 운영 과정은 다음과 같습니다:
 
-- 제안
-- 멤버
-- 제안(투표 시스템)
-- 제안(유예)
-- 실행(다수결, 제안 실행)
+- 제안 생성
+- 멤버 소집
+- 투표 시스템을 통한 제안 투표
+- 유예 기간 설정
+- 다수결에 따른 제안 실행
 
-2. factory 컨트랙트 구현
+2. Factory 컨트랙트 구현
 
-- 제안 하나가 컨트랙트로 구성이 되고
-- 제안을 관리하는 factory 컨트랙트가 있고
-- DAO컨트랙트를 생성 및 관리 하는 인스턴스가 될 것.
+Factory 컨트랙트는 제안을 관리하며, DAO 컨트랙트를 생성 및 관리하는 역할을 합니다. 이를 통해 DAO의 운영 과정이 구현됩니다.
 
-# 컨트랙트의 보안의 문제
+### 컨트랙트 보안 문제: TheDAO 사례
 
-### THEDAO
-
-- 재진입 공격 스마트 컨트랙트에서 위험한 내용
-- 공격자가 컨트랙트의 메서드를 예측하지 못한 순서로 재귀적으로 호출을 해서 발생하는 문제점.
-- 상태 변수의 변경이 이루어 지기전에 호출을 하는 경우 상태변수 변경이 되지 않은 상태에서 추가 작업이 이루어 질수 있다.(예측하지 못한 오류)
-
-- 외부 컨트랙트에서 호출할때 발생할 확율이 높다.
-
-- the dao 공격은 공격자가 DAO 컨트랙트에 이더를 출금하는 메서드를 재귀적 요청을 통해 이더를 탈취했다. 상태 변경이 이루어 지기전에 여러번 호출이 되어서 문제였던것.
-
-# checks-effects-interactions 패턴
-
-- 단계 별로 코드를 작성 -> checks(검증) -> effects(컨트랙트 상태 변경) -> interactions(외부 컨트랙트 호출) 순서에 맞게 코드를 작성 하는 디자인 패턴
-- 어려워 보이지만 내용은 그냥 조건문 먼저 검증하고 상태 변환하고 외부 컨트랙트 호출해라 CA1 -> CA2
-- CA1의 상태변수를 먼저 변경하고 CA2의 호출을해서 CA2의 상태변수를 변경하거나 이더를 전송해라.
-- 내부 컨트랙트의 상태 업데이트 -> 외부 컨트랙트 상태 업데이트 및 호출
-- 외부 컨트랙트의 transfer 등의 메서드는 CA1의 상태가 모두 잘 먼저 업데이트를 하고 CA2(외부 컨트랙트) 에서 호출해라 그래야 재진입 공격을 대비할수 있다.
+TheDAO 사건은 재진입 공격으로 인해 발생한 보안 문제의 대표적인 예입니다. 공격자는 컨트랙트의 메서드를 예측하지 못한 순서로 재귀적으로 호출하여 이더를 탈취했습니다. 이러한 문제를 방지하기 위해 'checks-effects-interactions' 패턴을 사용하는 것이 좋습니다. 이 패턴은 코드를 검증(checks), 상태 변경(effects), 외부 컨트랙트 호출(interactions)의 순서로 작성하는 디자인 패턴입니다. 이를 통해 재진입 공격을 방지할 수 있습니다.
 
 ```javascript
-// 패턴을 사용해서 예시를 작성해보자.
-// 예시)
-// 입금이 되고 출금이 됨 (이자)
-// CA주소로 EOA계정이 입금했을때 recive 메서드
-// myBank === CA1
-// interest === CA2
-import "./myInterset";
+// 'checks-effects-interactions' 패턴을 적용한 은행 및 이자 계산 예제입니다.
+// 이 예제에서는 사용자가 이더리움을 입금하고 출금할 수 있는 은행 컨트랙트(myBank)와
+// 사용자의 이더리움 잔액에 따라 이자를 계산해주는 이자 계산 컨트랙트(myInterest)를 구현합니다.
+
+import "./myInterest"; // 이자 계산 컨트랙트를 가져옵니다.
+
+// 은행 컨트랙트 정의
 contract myBank {
-    // 누가 입금 얼마했는지
+    // 사용자의 이더리움 잔액을 추적합니다.
     mapping(address => uint) balances;
-    // 외부 컨트랙트와 상호작용을 하기 위해 컨트랙트의 주소를 가지고있자.
-    myInterset _myInterset;
+    // 이자 계산을 위해 외부 컨트랙트(myInterest)와 상호작용합니다.
+    myInterest _myInterest;
+
+    // 생성자에서 이자 계산 컨트랙트의 주소를 받아 초기화합니다.
     constructor(address _CA){
-        _myInterset =  myInterset(_CA);
+        _myInterest = myInterest(_CA);
     }
 
-    // 이더 입금
-    recive() payable {
-        // 누군가 CA주소로 이더를 입금하면 발생되는 메서드
-        // msg.sender 이더 보낸사람 from
-        // msg.value 이더를 얼마 보냈는지
-        // 컨트랙트에 이더를 보냈으니까 입금임
-        // 상태변수에 기록을 해놓자
-        balacnes[msg.sender] += msg.value;
-        _myInterset.setInterest(msg.sender, msg.value);
+    // 사용자가 이더리움을 입금할 때 호출되는 함수입니다.
+    receive() payable {
+        // 입금한 사용자의 주소와 금액을 기록합니다.
+        balances[msg.sender] += msg.value;
+        // 이자 계산 컨트랙트에 입금 정보를 전달합니다.
+        _myInterest.setInterest(msg.sender, msg.value);
     }
-    // 이더 출금
-    function ethOut (uint _amount) payable {
-        // 출금 부분 민감..
-        // 이중 출금이 되면 안됨
-        // checks : 출금하기전에 검증
-        require(balances[msg.sender] >= _amount);
 
-        // effects : 출금 가능하면 이제 호출자의 잔액의 상태변수 변경
+    // 사용자가 이더리움을 출금할 때 호출되는 함수입니다.
+    function ethOut(uint _amount) payable {
+        // 출금 전에 사용자의 잔액이 충분한지 검증합니다. (checks)
+        require(balances[msg.sender] >= _amount, "잔액 부족");
+
+        // 출금 가능한 경우, 사용자의 잔액을 감소시킵니다. (effects)
         balances[msg.sender] -= _amount;
 
-        // interactions : 이더 전송을 통한 상호작용 및 외부 상호작용
-        // address payable : 이더를 보내거나 받을때
+        // 사용자에게 이더리움을 전송하고, 이자를 받습니다. (interactions)
         address payable(msg.sender).transfer(_amount);
-        // 외부 컨트랙트 호출도 인터렉션 부분에서
-        _myInterset.getInerest(msg.sender);
+        _myInterest.getInterest(msg.sender);
     }
 
-    // 내 이더 금액 조회
+    // 사용자의 현재 이더리움 잔액을 조회하는 함수입니다.
     function getBalance() public view returns(uint) {
         return balances[msg.sender];
     }
 }
 
-contract myInterset {
+// 이자 계산 컨트랙트 정의
+contract myInterest {
+    // 사용자별 이더리움 입금액을 추적합니다.
     mapping(address => uint) balances;
-    // 총금액 입금한거 얼마인지 알고 이자를 주려고
-    function setInterest (address owner, uint _balance) external {
-        balaces[owner] += _balance;
+
+    // 사용자의 입금액을 기록하여 이자를 계산할 기반을 마련합니다.
+    function setInterest(address owner, uint _balance) external {
+        balances[owner] += _balance;
     }
 
-    // 총금액의 몇퍼센트를 이자로 주자.
-    function getInerest (address owner) external payable {
-        // 이자의 이더를 출금자에게 전송
-        uint interest = balances[owner] / 10;
-        // 이자 이더 전송
+    // 사용자에게 이자를 지급하는 함수입니다.
+    function getInterest(address owner) external payable {
+        // 이자율을 적용하여 이자 금액을 계산합니다.
+        uint interest = balances[owner] / 10; // 예시로 10%의 이자율을 적용
+        // 계산된 이자를 사용자에게 전송합니다.
         address payable(owner).transfer(interest);
     }
 }
 ```
 
-### 목적
+### 목적 및 개요
 
-- 외부 컨트랙트의 호출을 할때 재진입 공격을 방지하기위해 사용하는 패턴
+- 이 패턴은 스마트 컨트랙트가 외부 컨트랙트를 호출할 때 발생할 수 있는 재진입 공격을 방지하기 위해 사용됩니다. 재진입 공격은 외부 컨트랙트 호출 중에 해당 컨트랙트의 함수가 예상치 못하게 재호출되어 발생하는 보안 취약점입니다.
 
-### 순서
+### 실행 순서
 
-- 내부 컨트랙트 (상태변수 변경 완료) -> 외부 컨트랙트 호출
+1. 내부 컨트랙트에서 상태변수의 변경을 완료합니다.
+2. 변경된 상태를 기반으로 외부 컨트랙트를 호출합니다.
 
-# 뮤텍스 패턴 (재진입 공격 방지를 위한 가드 추가)
+# 뮤텍스 패턴 사용
 
-- 재진입 공격이라는건 상태변수 변경 전에 메서드를 재귀적으로 호출해서 문제가 생기는것.
-- 값을 가지고 값에 따라 실행중이면 메서드의 호출을 방지 하는것.
-- 방법은 저렴하고 간단함 bool값으로 true 및 false의 값을 판단해서 메서드 호출을 막음
+- 뮤텍스(Mutex) 패턴은 재진입 공격을 방지하기 위한 방법으로, 함수가 재귀적으로 호출되는 것을 막기 위해 사용됩니다. 이 패턴은 함수 실행 중 다른 함수 호출을 방지하는 '잠금' 메커니즘을 구현합니다.
+- 구현 방법은 간단하며, bool 타입의 변수를 사용하여 함수의 재호출 가능 여부를 제어합니다. 함수가 실행되기 전에 잠금 상태를 확인하고, 실행 도중에는 잠금을 설정하여 다른 호출을 방지합니다.
 
 ```javascript
-// 예시
+// myBank 컨트랙트 예시
 contract myBank {
+    // 사용자의 잔액을 추적하는 매핑
     mapping(address => uint) balances;
+    // 재진입 공격을 방지하기 위한 잠금 상태 변수
     bool private lock;
+
+    // 생성자에서 잠금 상태를 초기화합니다.
     constructor(){
-        lock = false;
+        lock = false; // 초기 잠금 상태는 해제됨
     }
 
-    // 출금
+    // 사용자가 이더리움을 출금하는 함수
     function ethOut(uint _amount) payable{
-        // lock 변수 확인 false인지 실행중인지.
-        require(!lock);
-        // checks
-        require(balances[msg.sender] >= _amount);
-        // 여기서 실행중 상태변수 업데이트
-        lock = true; // 스위치 온
+        // 잠금 상태를 확인하여 재진입 방지
+        require(!lock, "현재 다른 작업이 실행 중입니다.");
+        // 사용자의 잔액이 출금하려는 금액보다 많은지 확인
+        require(balances[msg.sender] >= _amount, "잔액이 부족합니다.");
 
-        // effects
+        // 잠금 상태를 활성화하여 다른 작업의 실행을 방지
+        lock = true;
+
+        // 사용자의 잔액을 감소시키고 이더리움을 전송
         balances[msg.sender] -= _amount;
-
-        // interractions
         address payable(msg.sender).transfer(_amount);
 
-        // 메서드의 제일 마지막 부분에
-        // 스위치 오프
+        // 작업이 완료되면 잠금 상태를 해제
         lock = false;
     }
-    //
 }
-
 ```
 
-### 목적
+### 목적 및 방법 요약
 
-- 해당 컨트랙트에 재귀적으로 호출될수 있는 공격을 방지
-- 메서드 실행 부분에 방지 가드의 조건을 상태변수의 값으로 방지해서 재진입 방지.
+- 이 부분은 스마트 컨트랙트가 외부로부터 재귀적인 호출을 받아 재진입 공격을 당하는 것을 방지하는 방법에 대해 설명합니다. 재진입 공격은 외부 컨트랙트가 예상치 못한 시점에 다시 호출되어 발생하는 보안 취약점입니다. 이를 방지하기 위해, 상태 변수를 이용하여 메서드가 이미 실행 중인지를 확인하고, 실행 중이면 다른 호출을 막는 '방지 가드'를 설정합니다.
 
-### 컨트랙트 가스비 절약을 위해 새로운 문법
+### 가스비 절약 및 코드 최적화
 
-### 조건 논리 제어자 사용
+- 스마트 컨트랙트의 실행 비용을 줄이기 위해 새로운 문법과 조건 논리 제어자(modifier)를 사용합니다. 이를 통해 코드의 재사용성을 높이고, 가스비를 절약할 수 있습니다. 조건 논리 제어자는 특정 조건을 만족할 때만 함수가 실행되도록 하는 역할을 하며, 코드의 중복을 줄여줍니다.
 
-- 조건문의 재사용성을 높일수 있다.
+### 구현 방식
 
-# 작성법
+- 조건 논리 제어자를 사용하여 함수 실행 전에 특정 조건을 검사합니다. 이를 통해 코드의 안정성을 높이고, 재사용 가능한 조건문을 통해 가스비를 절약할 수 있습니다. 예를 들어, 함수가 특정 사용자에 의해서만 호출될 수 있도록 제한하는 경우, 조건 논리 제어자를 사용하여 이를 간단하게 구현할 수 있습니다.
 
 ```javascript
 modifier onlyOwner() {
-    // 배포자인지 확인
-    require(msg.sender == owner);
-    // 본문의 내용을 배치 어떻게 하지?.
-    _; // 본문의 위치 표시는 _; 구문으로 한다.
+    // 함수를 호출한 사람이 컨트랙트의 소유자인지 확인합니다.
+    require(msg.sender == owner, "이 기능은 오직 소유자만 호출할 수 있습니다.");
+    // 소유자 확인 후, 실제 함수의 로직이 실행됩니다.
+    _; // 이 구문은 modifier를 사용하는 함수의 본문이 이 위치에 삽입됨을 의미합니다.
 }
 
-// 가스비 절감
+// 가스비 절약을 위해 onlyOwner modifier를 사용하는 함수 예시
 function ownerMinting() public onlyOwner {
+    // 소유자에게 10000 토큰을 발행합니다.
     _mint(msg.sender, 10000 * (10 ** 18));
 }
 
-// --- >  코드가 실행되는 구문 위의 내용으로
-function ownerMinting()public {
-    require(msg.sender == owner);
-    _mint(msg.sender, 10000 * (10 ** 18));
-}
-
-// 매개변수 사용하는 경우
+// 매개변수를 사용하여 특정 주소가 소유자인지 확인하는 modifier 예시
 modifier onlyOwner(address _owner){
-    require(_owner === owner);
-    _;
+    // 주어진 주소가 소유자와 일치하는지 확인합니다.
+    require(_owner == owner, "이 기능은 오직 소유자만 호출할 수 있습니다.");
+    // 확인 후, 실제 함수의 로직이 실행됩니다.
+    _; // 이 구문은 modifier를 사용하는 함수의 본문이 이 위치에 삽입됨을 의미합니다.
 }
 
+// 매개변수를 사용하는 함수 예시, 특정 주소를 소유자로 확인 후 토큰 발행
 function ownerMinting(address sender) public onlyOwner(sender) {
-    _mint(msg.sender, 10000 * (10 ** 18));
+    // 주어진 주소에 10000 토큰을 발행합니다.
+    _mint(sender, 10000 * (10 ** 18));
 }
 
 ```
@@ -256,4 +220,8 @@ function ownerMinting(address sender) public onlyOwner(sender) {
 
 ```sh
 remixd -s . --remix-ide https://remix.ethereum.org
+```
+
+```
+
 ```

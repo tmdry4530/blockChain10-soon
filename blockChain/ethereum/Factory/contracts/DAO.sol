@@ -1,74 +1,70 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+// DAO 컨트랙트 정의
 contract DAO {
-    // 방향성 생태계에 참여해서
-    // 거버넌스라는 토큰을 받아서
-    // 멤버로 추가를 해줘도 되고
-
-    // 조직을 구성한 컨트랙트 배포자가 멤버를 추가 해줘도 된다.
+    // 컨트랙트 배포자를 저장하는 상태 변수
     address private owner;
-    // 멤버들의 추가해줄 상태변수
+    // 멤버 여부를 저장하는 매핑. 주소가 멤버인지 아닌지를 나타냄
     mapping(address => bool) private members;
-    // 참여한 멤버의 인원
+    // 현재 멤버 수를 저장하는 상태 변수
     uint private memberCount;
-    // 이 조직에서 제안한 제안들을 담을 상태변수
+    // 제안들을 저장하는 배열
     Proposal[] public proposals;
-    // 제안에 멤버들이 참여했는지
+    // 특정 멤버가 특정 제안에 투표했는지 여부를 저장하는 매핑
     mapping(address => mapping(uint => bool)) private voted;
 
+    // DAO 컨트랙트 생성자
     constructor(address _owner) {
-        // factory 컨트랙트에서 조직을 만든 사람이 조직 컨트랙트의 주인.
+        // 컨트랙트 배포자를 owner 상태 변수에 할당
         owner = _owner;
-        // 조직 대표도 멤버
-        // msg.sender CA factory ==== 
+        // 배포자를 첫 번째 멤버로 추가
         members[_owner] = true;
+        // 멤버 수를 1 증가
         memberCount += 1;
     }
 
+    // 제안의 상태를 나타내는 열거형
     enum Play {
-        loading,
-        start,
-        end
+        loading, // 준비 중
+        start,   // 시작됨
+        end      // 종료됨
     }
 
-    // 제안을 만들때 객체의 구성
+    // 제안을 나타내는 구조체
     struct Proposal {
         string title; // 제안의 제목
-        string text; // 제안의 내용
-        uint votes; // 투표 수
-        Play plays; // 제안이 실행중인지.
-        bool execute; // 승인 및 거부
+        string text;  // 제안의 내용
+        uint votes;   // 투표 수
+        Play plays;   // 제안의 상태
+        bool execute; // 제안이 실행되었는지 여부
     }
 
+    // 멤버만 호출할 수 있는 함수를 위한 제어자
     modifier onlyMenber() {
         require(members[msg.sender], "no member");
         _;
     }
 
+    // 오직 컨트랙트 소유자만 호출할 수 있는 함수를 위한 제어자
     modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
 
+    // 이미 투표한 멤버가 다시 투표하지 못하도록 하는 제어자
     modifier alreadyVote(uint index) {
         require(!voted[msg.sender][index]);
         _;
     }
 
-    // modifier onlyToken() {}
-
+    // 멤버를 추가하는 함수
     function setghMenbers(address _address) public onlyOwner {
-        // 멤버로 승인
-        members[_address] = true;
-        // 인원 증가
-        memberCount += 1;
+        members[_address] = true; // 멤버로 추가
+        memberCount += 1; // 멤버 수 증가
     }
 
-    // 누군가 제안을 하자
-    // 누가 만드는지 내용
-    // 멤버만 호출 가능
-    // 멤버가 제안을 만들어서 제시할수 있는 내용의 메서드
+    // 제안을 생성하는 함수
     function createProposal(
         string memory _title,
         string memory _text
@@ -84,38 +80,29 @@ contract DAO {
         );
     }
 
-    // 투표하자
-    // 어떤 제안을 투표할지는 인덱스
+    // 제안에 투표하는 함수
     function vote(uint _index) public onlyMenber alreadyVote(_index) {
-        // 투표하는 제안을 가져오고
-        Proposal storage porposal = proposals[_index];
+        Proposal storage proposal = proposals[_index]; // 투표할 제안을 가져옴
 
-        require(porposal.plays == Play.start);
-        // 투표 진행
-        proposals[_index].votes += 1;
+        require(proposal.plays == Play.start); // 제안이 시작 상태인지 확인
+        proposal.votes += 1; // 투표 수 증가
 
-        // 재투표 불가능
-        voted[msg.sender][_index] = true;
+        voted[msg.sender][_index] = true; // 재투표 방지를 위해 투표 기록
     }
 
-    // 조직 대표가 제안을 확인하고 투표를 진행 상태로 만들어 주자
+    // 투표를 시작하는 함수
     function startVote(uint _index) public onlyOwner {
-        // 투표하는 제안을 가져오고
-        Proposal storage porposal = proposals[_index];
-        proposals[_index].plays = Play.start;
+        Proposal storage proposal = proposals[_index];
+        proposal.plays = Play.start; // 제안의 상태를 시작으로 변경
     }
 
-    // 조직 대표가 투표를 종료 시켜줌
+    // 투표를 종료하는 함수
     function endVote(uint _index) public onlyOwner {
-        // 투표하는 제안을 가져오고
-        Proposal storage _porposal = proposals[_index];
-        require(_porposal.plays == Play.start);
-        // 총 멤버중 우리가 정하는 퍼센트 이상 참여를 했는지 확인
-        require(_porposal.votes > memberCount / 2);
+        Proposal storage proposal = proposals[_index];
+        require(proposal.plays == Play.start); // 제안이 시작 상태인지 확인
+        require(proposal.votes > memberCount / 2); // 과반수 이상이 투표했는지 확인
 
-        // 고민하는 사람이나 제안이 맘에 안들어서 투표를 안하면
-        // 제안 거부
-        proposals[_index].execute = true;
-        proposals[_index].plays = Play.end;
+        proposal.execute = true; // 제안 실행
+        proposal.plays = Play.end; // 제안 상태를 종료로 변경
     }
 }
